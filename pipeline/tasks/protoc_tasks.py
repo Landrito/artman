@@ -359,6 +359,18 @@ class GrpcPackmanTask(packman_tasks.PackmanTaskBase):
         return os.path.join(pkg_dir, language)
 
 
+class RubyGrpcPackmanTask(GrpcPackmanTask):
+
+    def execute(self, language, api_name, output_dir, src_proto_path,
+                import_proto_path, packman_flags=None, repo_dir=None,
+                proto_gen_pkg_deps=None):
+        packman_flags = packman_flags or []
+        packman_flags += ['--proto_compiler', 'grpc_tools_ruby_protoc']
+        return super(RubyGrpcPackmanTask, self).execute(
+            language, api_name, output_dir, src_proto_path,
+            import_proto_path, packman_flags, repo_dir)
+
+
 class JavaGrpcPackmanTask(GrpcPackmanTask):
 
     def execute(self, language, api_name, output_dir, src_proto_path,
@@ -374,6 +386,25 @@ class JavaGrpcPackmanTask(GrpcPackmanTask):
         return super(JavaGrpcPackmanTask, self).execute(
             language, api_name, output_dir, src_proto_path,
             import_proto_path, packman_flags, repo_dir)
+
+
+class RubyGrpcCopyTask(task_base.TaskBase):
+    """Copies the generated protos and gRPC client library to
+    the final_repo_dir/lib.
+    """
+    def execute(self, api_name, language, output_dir,
+                final_repo_dir):
+        pkg_dir = _pkg_root_dir(output_dir, api_name, language)
+        pkg_dir = os.path.join(pkg_dir, 'ruby', 'lib')
+        final_repo_lib = os.path.join(final_repo_dir, 'lib')
+        print "Copying " + pkg_dir + "/* to " + final_repo_lib
+        if not os.path.exists(final_repo_lib):
+            self.exec_command(['mkdir', '-p', final_repo_lib])
+        if os.path.exists(pkg_dir):
+            for entry in os.listdir(pkg_dir):
+                src_path = os.path.join(pkg_dir, entry)
+                self.exec_command([
+                    'cp', '-rf', src_path, final_repo_lib])
 
 
 class GoExtractImportBaseTask(task_base.TaskBase):
