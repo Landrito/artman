@@ -396,15 +396,10 @@ class RubyGrpcCopyTask(task_base.TaskBase):
                 final_repo_dir):
         pkg_dir = _pkg_root_dir(output_dir, api_name, language)
         pkg_dir = os.path.join(pkg_dir, 'ruby', 'lib')
-        final_repo_lib = os.path.join(final_repo_dir, 'lib')
-        print "Copying " + pkg_dir + "/* to " + final_repo_lib
-        if not os.path.exists(final_repo_lib):
-            self.exec_command(['mkdir', '-p', final_repo_lib])
-        if os.path.exists(pkg_dir):
-            for entry in os.listdir(pkg_dir):
-                src_path = os.path.join(pkg_dir, entry)
-                self.exec_command([
-                    'cp', '-rf', src_path, final_repo_lib])
+        print "Copying " + pkg_dir + "/* to " + final_repo_dir
+        if not os.path.exists(final_repo_dir):
+            self.exec_command(['mkdir', '-p', final_repo_dir])
+        self.exec_command(['cp', '-rf', pkg_dir, final_repo_dir])
 
 
 class GoExtractImportBaseTask(task_base.TaskBase):
