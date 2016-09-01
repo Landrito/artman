@@ -48,7 +48,7 @@ class GrpcTaskFactoryBase(code_gen.TaskFactoryBase):
 class _RubyGrpcTaskFactory(GrpcTaskFactoryBase):
 
     def _get_grpc_codegen_tasks(self, **kwargs):
-        return [protoc_tasks.RubyGrpcPackmanTask,
+        return [protoc_tasks.GrpcPackmanTask,
                 protoc_tasks.RubyGrpcCopyTask,
                 package_tasks.RubyPackageGenTask]
 

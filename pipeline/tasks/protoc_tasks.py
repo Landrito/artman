@@ -359,18 +359,6 @@ class GrpcPackmanTask(packman_tasks.PackmanTaskBase):
         return os.path.join(pkg_dir, language)
 
 
-class RubyGrpcPackmanTask(GrpcPackmanTask):
-
-    def execute(self, language, api_name, output_dir, src_proto_path,
-                import_proto_path, packman_flags=None, repo_dir=None,
-                proto_gen_pkg_deps=None):
-        packman_flags = packman_flags or []
-        packman_flags += ['--proto_compiler', 'grpc_tools_ruby_protoc']
-        return super(RubyGrpcPackmanTask, self).execute(
-            language, api_name, output_dir, src_proto_path,
-            import_proto_path, packman_flags, repo_dir)
-
-
 class JavaGrpcPackmanTask(GrpcPackmanTask):
 
     def execute(self, language, api_name, output_dir, src_proto_path,
