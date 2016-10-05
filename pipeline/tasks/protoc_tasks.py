@@ -47,6 +47,9 @@ class _SimpleProtoParams:
     def grpc_out_param(self, output_dir):
         return '--grpc_out=' + self.code_root(output_dir)
 
+    def proto_compiler(self):
+        return 'protoc'
+
 
 class _JavaProtoParams:
     def __init__(self):
@@ -68,6 +71,9 @@ class _JavaProtoParams:
 
     def grpc_out_param(self, output_dir):
         return '--grpc_out=' + self.code_root(output_dir)
+
+    def proto_compiler(self):
+        return 'protoc'
 
 
 class _GoProtoParams:
@@ -94,6 +100,9 @@ class _GoProtoParams:
         # returns None.
         return None
 
+    def proto_compiler(self):
+        return 'protoc'
+
 
 class _PhpProtoParams:
     def __init__(self):
@@ -115,21 +124,41 @@ class _PhpProtoParams:
     def grpc_out_param(self, output_dir):
         return '--grpc_out=' + self.code_root(output_dir)
 
+    def proto_compiler(self):
+        return 'protoc'
+
+
+class _RubyProtoParams:
+    def __init__(self):
+        self.path = None
+        self.params = lang_params.LANG_PARAMS_MAP['ruby']
+
+    def code_root(self, output_dir):
+        return self.params.code_root(output_dir)
+
+    def lang_out_param(self, output_dir, with_grpc):
+        return '--ruby_out={}'.format(self.code_root(output_dir))
+
+    def grpc_plugin_path(self, dummy_toolkit_path):
+        if self.path is None:
+            self.path = subprocess.check_output(
+                ['which', 'grpc_ruby_plugin'],
+                stderr=subprocess.STDOUT)[:-1]
+        return self.path
+
+    def grpc_out_param(self, output_dir):
+        return '--grpc_out=' + self.code_root(output_dir)
+
+    def proto_compiler(self):
+        return 'grpc_tools_ruby_protoc'
+
 
 _PROTO_PARAMS_MAP = {
-    'ruby': _SimpleProtoParams('ruby'),
+    'ruby': _RubyProtoParams(),
     'java': _JavaProtoParams(),
     'go': _GoProtoParams(),
     'csharp': _SimpleProtoParams('csharp'),
     'php': _PhpProtoParams(),
-}
-
-_PROTO_COMPILERS_MAP = {
-    'ruby': 'grpc_tools_ruby_protoc',
-    'java': 'protoc',
-    'go': 'protoc',
-    'csharp': 'protoc',
-    'php': 'protoc',
 }
 
 
@@ -286,7 +315,7 @@ class ProtoAndGrpcCodeGenTask(task_base.TaskBase):
                 toolkit_path, output_dir, api_name):
         proto_params = _PROTO_PARAMS_MAP[language]
         pkg_dir = _prepare_pkg_dir(output_dir, api_name, language)
-        proto_compiler = _PROTO_COMPILERS_MAP[language]
+        proto_compiler = proto_params.proto_compiler()
         # See the comments in ProtoCodeGenTask for why this needs to group the
         # proto files by directory.
         for (dirname, protos) in _group_by_dirname(
