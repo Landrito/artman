@@ -47,6 +47,7 @@ class _SimpleProtoParams:
     def grpc_out_param(self, output_dir):
         return '--grpc_out=' + self.code_root(output_dir)
 
+    @property
     def proto_compiler(self):
         return 'protoc'
 
@@ -72,6 +73,7 @@ class _JavaProtoParams:
     def grpc_out_param(self, output_dir):
         return '--grpc_out=' + self.code_root(output_dir)
 
+    @property
     def proto_compiler(self):
         return 'protoc'
 
@@ -100,6 +102,7 @@ class _GoProtoParams:
         # returns None.
         return None
 
+    @property
     def proto_compiler(self):
         return 'protoc'
 
@@ -124,6 +127,7 @@ class _PhpProtoParams:
     def grpc_out_param(self, output_dir):
         return '--grpc_out=' + self.code_root(output_dir)
 
+    @property
     def proto_compiler(self):
         return 'protoc'
 
@@ -149,6 +153,7 @@ class _RubyProtoParams:
     def grpc_out_param(self, output_dir):
         return '--grpc_out=' + self.code_root(output_dir)
 
+    @property
     def proto_compiler(self):
         return 'grpc_tools_ruby_protoc'
 
@@ -200,12 +205,10 @@ def _group_by_dirname(protos):
 
 
 def _protoc_header_params(proto_path,
-                          toolkit_path,
-                          proto_compiler='protoc'):
+                          toolkit_path):
     proto_path = proto_path[:]
     proto_path.append(_find_protobuf_path(toolkit_path))
-    return ([proto_compiler] +
-            ['--proto_path=' + path for path in proto_path])
+    return (['--proto_path=' + path for path in proto_path])
 
 
 def _protoc_desc_params(output_dir, desc_out_file):
@@ -256,8 +259,8 @@ class ProtoDescGenTask(task_base.TaskBase):
         #   - it doesn't have to
         #   - and multiple invocation will overwrite the desc_out_file
         self.exec_command(
-            _protoc_header_params(
-                header_proto_path, toolkit_path) +
+            ['protoc'] +
+            _protoc_header_params(header_proto_path, toolkit_path) +
             _protoc_desc_params(output_dir, desc_out_file) +
             desc_protos)
         return os.path.join(output_dir, desc_out_file)
@@ -279,6 +282,7 @@ class ProtoCodeGenTask(task_base.TaskBase):
                 _find_protos(src_proto_path)).items():
             print 'Generating protos {0}'.format(dirname)
             self.exec_command(
+                [proto_params.proto_compiler] +
                 _protoc_header_params(
                     import_proto_path + src_proto_path, toolkit_path) +
                 _protoc_proto_params(proto_params, pkg_dir, with_grpc=False) +
@@ -300,6 +304,7 @@ class GrpcCodeGenTask(task_base.TaskBase):
                 _find_protos(src_proto_path)).items():
             print 'Running protoc with grpc plugin on {0}'.format(dirname)
             self.exec_command(
+                [proto_params.proto_compiler] +
                 _protoc_header_params(
                     import_proto_path + src_proto_path, toolkit_path) +
                 _protoc_grpc_params(proto_params, pkg_dir, toolkit_path) +
@@ -315,17 +320,15 @@ class ProtoAndGrpcCodeGenTask(task_base.TaskBase):
                 toolkit_path, output_dir, api_name):
         proto_params = _PROTO_PARAMS_MAP[language]
         pkg_dir = _prepare_pkg_dir(output_dir, api_name, language)
-        proto_compiler = proto_params.proto_compiler()
         # See the comments in ProtoCodeGenTask for why this needs to group the
         # proto files by directory.
         for (dirname, protos) in _group_by_dirname(
                 _find_protos(src_proto_path)).items():
             print 'Running protoc and grpc plugin on {0}'.format(dirname)
             self.exec_command(
+                [proto_params.proto_compiler] +
                 _protoc_header_params(
-                    import_proto_path + src_proto_path,
-                    toolkit_path,
-                    proto_compiler) +
+                    import_proto_path + src_proto_path, toolkit_path) +
                 _protoc_proto_params(proto_params, pkg_dir, with_grpc=True) +
                 _protoc_grpc_params(proto_params, pkg_dir, toolkit_path) +
                 protos)
